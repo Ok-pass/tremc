@@ -1988,8 +1988,8 @@ class Interface(object):
         else:
             color = 0
 
-        tag = curses.A_REVERSE
-        tag_done = tag + color
+        tag = color
+        tag_done = tag + curses.A_REVERSE
         if focused:
             tag += curses.A_BOLD
             tag_done += curses.A_BOLD
