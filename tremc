@@ -135,6 +135,10 @@ config.set('Colors', 'file_prio_high',   'bg:red,fg:black')
 config.set('Colors', 'file_prio_normal', 'bg:white,fg:black')
 config.set('Colors', 'file_prio_low',    'bg:yellow,fg:black')
 config.set('Colors', 'file_prio_off',    'bg:blue,fg:black')
+config.set('Colors', 'status',           'bg:white,fg:black')
+config.set('Colors', 'status_focused',   'bg:blue,fg:black')
+config.set('Colors', 'header',           'bg:red,fg:black')
+config.set('Colors', 'footer',           'bg:yellow,fg:black')
 
 
 class ColorManager(object):
@@ -2040,9 +2044,9 @@ class Interface(object):
                                                        ('s', ' ')[torrent['peersConnected'] == 1]))
 
         if focused:
-            tags = curses.A_REVERSE + curses.A_BOLD
+            tags = curses.A_REVERSE + curses.A_BOLD + curses.color_pair(self.colors.id('status_focused'))
         else:
-            tags = 0
+            tags = curses.A_REVERSE + curses.color_pair(self.colors.id('status'))
 
         remaining_space = self.torrent_title_width - sum([len(x) for x in parts], len(peers)) - 2
         delimiter = ' ' * int(remaining_space / (len(parts)))
@@ -2623,11 +2627,12 @@ class Interface(object):
         return focus, scrollpos
 
     def draw_stats(self):
-        self.screen.insstr(self.height-1, 0, ' '.center(self.width), curses.A_REVERSE)
+        self.screen.insstr(self.height-1, 0, ' '.center(self.width), curses.A_REVERSE + curses.color_pair(self.colors.id('footer')))
         self.draw_torrents_stats()
         self.draw_global_rates()
 
     def draw_torrents_stats(self):
+        foot_col = curses.color_pair(self.colors.id('footer'))
         if self.selected_torrent > -1 and self.details_category_focus == 2:
             self.screen.insstr((self.height-1), 0,
                                "%d peer%s connected (" % (self.torrent_details['peersConnected'],
@@ -2638,35 +2643,35 @@ class Interface(object):
                                    "PEX:%d " % self.torrent_details['peersFrom']['fromPex'] + \
                                    "Incoming:%d " % self.torrent_details['peersFrom']['fromIncoming'] + \
                                    "Cache:%d)" % self.torrent_details['peersFrom']['fromCache'],
-                               curses.A_REVERSE)
+                               curses.A_REVERSE + foot_col)
         elif vmode_id > -1:
-            self.screen.addstr((self.height-1), 0, "-- VISUAL --", curses.A_REVERSE)
+            self.screen.addstr((self.height-1), 0, "-- VISUAL --", curses.A_REVERSE + foot_col)
         else:
             self.screen.addstr((self.height-1), 0, "Torrent%s:" % ('s','')[len(self.torrents) == 1],
-                                   curses.A_REVERSE)
-            self.screen.addstr("%d (" % len(self.torrents), curses.A_REVERSE)
+                                   curses.A_REVERSE + foot_col)
+            self.screen.addstr("%d (" % len(self.torrents), curses.A_REVERSE + foot_col)
 
             downloading = len([x for x in self.torrents if x['status']==Transmission.STATUS_DOWNLOAD])
             seeding = len([x for x in self.torrents if x['status']==Transmission.STATUS_SEED])
             paused = self.stats['pausedTorrentCount']
 
-            self.screen.addstr("Downloading:", curses.A_REVERSE)
-            self.screen.addstr("%d " % downloading, curses.A_REVERSE)
-            self.screen.addstr("Seeding:", curses.A_REVERSE)
-            self.screen.addstr("%d " % seeding, curses.A_REVERSE)
-            self.screen.addstr("Paused:", curses.A_REVERSE)
-            self.screen.addstr("%d) " % paused, curses.A_REVERSE)
+            self.screen.addstr("Downloading:", curses.A_REVERSE + foot_col)
+            self.screen.addstr("%d " % downloading, curses.A_REVERSE + foot_col)
+            self.screen.addstr("Seeding:", curses.A_REVERSE + foot_col)
+            self.screen.addstr("%d " % seeding, curses.A_REVERSE + foot_col)
+            self.screen.addstr("Paused:", curses.A_REVERSE + foot_col)
+            self.screen.addstr("%d) " % paused, curses.A_REVERSE + foot_col)
 
             if self.filter_list:
                 self.screen.addstr("Filter:", curses.A_REVERSE)
                 self.screen.addstr("%s%s" % (('','not ')[self.filter_inverse], self.filter_list),
                                    curses.color_pair(self.colors.id('filter_status'))
-                                   + curses.A_REVERSE)
+                                   + curses.A_REVERSE + foot_col)
 
             # show last sort order (if terminal size permits it)
             curpos_y, curpos_x = self.screen.getyx()
             if self.sort_orders and self.width - curpos_x > 20:
-                self.screen.addstr(" Sort by:", curses.A_REVERSE)
+                self.screen.addstr(" Sort by:", curses.A_REVERSE + foot_col)
                 name = [name[1] for name in self.sort_options if name[0] == self.sort_orders[-1]['name']][0]
                 name = name.replace('_', '').lower()
                 curses_tags = curses.color_pair(self.colors.id('filter_status')) + curses.A_REVERSE
@@ -2713,7 +2718,7 @@ class Interface(object):
                            + curses.A_REVERSE + curses.A_BOLD)
 
     def draw_title_bar(self):
-        self.screen.insstr(0, 0, ' '.center(self.width), curses.A_REVERSE)
+        self.screen.insstr(0, 0, ' '.center(self.width), curses.A_REVERSE + curses.color_pair(self.colors.id('header')))
         self.draw_connection_status()
         self.draw_quick_help()
 
@@ -2721,7 +2726,7 @@ class Interface(object):
         status = "Transmission %s @ %s:%s" % (server.version, server.host, server.port)
         if cmd_args.DEBUG:
             status = "%d x %d " % (self.width, self.height) + status
-        self.screen.addstr(0, 0, status, curses.A_REVERSE)
+        self.screen.addstr(0, 0, status, curses.A_REVERSE + curses.color_pair(self.colors.id('header')))
 
     def draw_quick_help(self):
         help = [('?','Help')]
@@ -2746,7 +2751,7 @@ class Interface(object):
 
         line = '  '.join(["%s:%s" % (x[0], x[1]) for x in help])
         line = line[0:self.width]
-        self.screen.insstr(0, self.width-len(line), line, curses.A_REVERSE)
+        self.screen.insstr(0, self.width-len(line), line, curses.A_REVERSE + curses.color_pair(self.colors.id('header')))
 
     def list_key_bindings(self):
         title = 'Help Menu'
