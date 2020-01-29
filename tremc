@@ -2897,6 +2897,9 @@ class Interface(object):
         if important:
             win.bkgd(' ', curses.color_pair(self.colors.id('dialog_important'))
                           + curses.A_REVERSE)
+        else:
+            win.bkgd(' ', curses.color_pair(self.colors.id('dialog'))
+                          + curses.A_REVERSE)
 
         focus_tags   = curses.color_pair(self.colors.id('button_focused'))
         unfocus_tags = 0
